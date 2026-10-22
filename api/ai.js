@@ -4,9 +4,9 @@
 //
 // SETUP (in the Vercel dashboard, not in this file):
 //   1. Project -> Settings -> Environment Variables.
-//   2. Add ANTHROPIC_API_KEY with a key from console.anthropic.com.
-//      (To switch providers later: change PROVIDER below to 'openai' and
-//      add OPENAI_API_KEY instead.)
+//   2. Add GROQ_API_KEY with a key from console.groq.com/keys.
+//      (To switch providers later: change PROVIDER below to 'anthropic' and
+//      add ANTHROPIC_API_KEY, or 'openai' and add OPENAI_API_KEY, instead.)
 //   3. Redeploy. Vercel auto-detects any .js file in /api as a function.
 //
 // Known limitations, stated plainly:
@@ -17,7 +17,7 @@
 //   - Vercel's free plan caps how long a function may run; very long text
 //     on a slow model response could hit that ceiling.
 
-const PROVIDER = 'anthropic'; // 'anthropic' | 'openai'
+const PROVIDER = 'groq'; // 'anthropic' | 'openai' | 'groq'
 const MAX_INPUT_CHARS = 6000;
 
 // Each mode: builds the system/user prompt, how long the answer may run,
@@ -69,6 +69,15 @@ const PROMPTS = {
       temperature: 0.6,
     };
   },
+  'translate': (input) => {
+    const target = input.targetLang || 'Spanish';
+    return {
+      system: `Translate the given text into ${target}. Preserve the original meaning, tone and formatting (line breaks, lists). Return only the translation, with no preamble, no language label, and no explanation. If the text is already in ${target}, return it unchanged.`,
+      user: input.text,
+      max_tokens: 1200,
+      temperature: 0.2,
+    };
+  },
 };
 
 // Retries once on a transient overload/rate-limit response (429, 503, 529)
@@ -92,7 +101,7 @@ module.exports = async (req, res) => {
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { body = {}; }
   }
-  const { mode, text, tone, platform, length, audience } = body || {};
+  const { mode, text, tone, platform, length, audience, targetLang } = body || {};
 
   if (!mode || !PROMPTS[mode]) {
     res.status(400).json({ error: 'Unknown tool.' });
@@ -116,7 +125,7 @@ module.exports = async (req, res) => {
     .replace(/[ \t]{3,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n');
 
-  const built = PROMPTS[mode]({ text: cleanText, tone, platform, length, audience });
+  const built = PROMPTS[mode]({ text: cleanText, tone, platform, length, audience, targetLang });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25000);
 
@@ -149,6 +158,33 @@ module.exports = async (req, res) => {
       }
       const data = await r.json();
       result = (data.content || []).map((b) => b.text || '').join('').trim();
+    } else if (PROVIDER === 'groq') {
+      const key = process.env.GROQ_API_KEY;
+      if (!key) { res.status(500).json({ error: 'Server is not configured yet (missing API key).' }); return; }
+      const r = await fetchWithRetry('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: built.max_tokens,
+          temperature: built.temperature,
+          messages: [
+            { role: 'system', content: built.system },
+            { role: 'user', content: built.user },
+          ],
+        }),
+        signal: controller.signal,
+      });
+      if (!r.ok) {
+        console.error('Groq API error', r.status, await r.text().catch(() => ''));
+        res.status(502).json({ error: 'The AI service could not process this right now.' });
+        return;
+      }
+      const data = await r.json();
+      result = data.choices?.[0]?.message?.content?.trim() || '';
     } else {
       const key = process.env.OPENAI_API_KEY;
       if (!key) { res.status(500).json({ error: 'Server is not configured yet (missing API key).' }); return; }
