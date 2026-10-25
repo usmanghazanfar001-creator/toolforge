@@ -159,7 +159,7 @@ module.exports = async (req, res) => {
       const data = await r.json();
       result = (data.content || []).map((b) => b.text || '').join('').trim();
     } else if (PROVIDER === 'groq') {
-      const key = process.env.GROQ_API_KEY;
+      const key = (process.env.GROQ_API_KEY || '').trim();
       if (!key) { res.status(500).json({ error: 'Server is not configured yet (missing API key).' }); return; }
       const r = await fetchWithRetry('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -168,7 +168,10 @@ module.exports = async (req, res) => {
           'authorization': `Bearer ${key}`,
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          // 'llama-3.3-70b-versatile' was retired from Groq's free/dev tier in
+          // August 2026 and now requires an Enterprise plan. gpt-oss-120b is
+          // the current flagship model on the standard developer tier.
+          model: 'openai/gpt-oss-120b',
           max_tokens: built.max_tokens,
           temperature: built.temperature,
           messages: [
@@ -179,8 +182,9 @@ module.exports = async (req, res) => {
         signal: controller.signal,
       });
       if (!r.ok) {
-        console.error('Groq API error', r.status, await r.text().catch(() => ''));
-        res.status(502).json({ error: 'The AI service could not process this right now.' });
+        const errBody = await r.text().catch(() => '');
+        console.error('Groq API error', r.status, errBody);
+        res.status(502).json({ error: `The AI service could not process this right now (upstream ${r.status}).` });
         return;
       }
       const data = await r.json();
