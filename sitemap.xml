@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>https://aitoolforge.vercel.app/</loc><lastmod>2026-09-29</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/</loc><lastmod>2026-10-31</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/tools/json-formatter/</loc><lastmod>2026-09-29</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/tools/password-generator/</loc><lastmod>2026-09-29</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/tools/percentage-calculator/</loc><lastmod>2026-09-29</lastmod></url>
@@ -50,18 +50,18 @@
 <url><loc>https://aitoolforge.vercel.app/tools/text-to-speech/</loc><lastmod>2026-09-29</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/about/</loc><lastmod>2026-09-29</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/contact/</loc><lastmod>2026-09-29</lastmod></url>
-<url><loc>https://aitoolforge.vercel.app/ai/</loc><lastmod>2026-10-23</lastmod></url>
-<url><loc>https://aitoolforge.vercel.app/developers/</loc><lastmod>2026-10-23</lastmod></url>
-<url><loc>https://aitoolforge.vercel.app/students/</loc><lastmod>2026-10-23</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/ai/</loc><lastmod>2026-10-31</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/developers/</loc><lastmod>2026-10-31</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/students/</loc><lastmod>2026-10-31</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/calculators/</loc><lastmod>2026-10-23</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/converters/</loc><lastmod>2026-10-23</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/text-tools/</loc><lastmod>2026-10-23</lastmod></url>
-<url><loc>https://aitoolforge.vercel.app/images/</loc><lastmod>2026-10-23</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/images/</loc><lastmod>2026-10-31</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/generators/</loc><lastmod>2026-10-23</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/privacy-policy/</loc><lastmod>2026-09-29</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/terms/</loc><lastmod>2026-09-29</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/disclaimer/</loc><lastmod>2026-09-29</lastmod></url>
-<url><loc>https://aitoolforge.vercel.app/blog/</loc><lastmod>2026-09-29</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/blog/</loc><lastmod>2026-10-31</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/blog/how-to-format-json-online/</loc><lastmod>2026-09-29</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/blog/how-to-calculate-cgpa/</loc><lastmod>2026-09-29</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/blog/how-to-calculate-gcd/</loc><lastmod>2026-09-29</lastmod></url>
@@ -72,6 +72,13 @@
 <url><loc>https://aitoolforge.vercel.app/tools/email-generator/</loc><lastmod>2026-10-06</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/tools/blog-outline-generator/</loc><lastmod>2026-10-06</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/tools/ai-translator/</loc><lastmod>2026-10-22</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/tools/ai-paragraph-generator/</loc><lastmod>2026-10-31</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/tools/ai-grammar-checker/</loc><lastmod>2026-10-31</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/tools/blog-title-generator/</loc><lastmod>2026-10-31</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/tools/image-to-pdf/</loc><lastmod>2026-10-31</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/tools/image-converter/</loc><lastmod>2026-10-31</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/tools/json-validator/</loc><lastmod>2026-10-31</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/tools/gpa-calculator/</loc><lastmod>2026-10-31</lastmod></url>
 <url><loc>https://aitoolforge.vercel.app/blog/how-ai-prompt-optimization-works/</loc><lastmod>2026-10-05</lastmod></url>
-<url><loc>https://aitoolforge.vercel.app/blog/free-ai-writing-tools/</loc><lastmod>2026-10-06</lastmod></url>
+<url><loc>https://aitoolforge.vercel.app/blog/free-ai-writing-tools/</loc><lastmod>2026-10-31</lastmod></url>
 </urlset>

@@ -69,6 +69,33 @@ const PROMPTS = {
       temperature: 0.6,
     };
   },
+  'paragraph': (input) => {
+    const tone = input.tone || 'informative';
+    const words = input.length === 'short' ? '50-70 words'
+      : input.length === 'long' ? '180-220 words'
+      : '100-130 words';
+    return {
+      system: `Write one well-structured paragraph of ${words} about the given topic in a ${tone} tone. Open with a clear topic sentence, support it with specific, concrete detail, and finish with a closing sentence. Do not invent statistics, quotes or named sources. Return only the paragraph, with no title, no preamble and no quotation marks.`,
+      user: `Topic: ${input.text}`,
+      max_tokens: 500,
+      temperature: 0.7,
+    };
+  },
+  'grammar': (input) => ({
+    system: 'You are a careful proofreader. Correct spelling, grammar, punctuation and obvious word-choice errors in the given text while keeping the author\'s meaning, voice and formatting (line breaks, lists). Do not rewrite for style and do not add new content. Reply in exactly this Markdown format:\n\n## Corrected text\n<the full corrected text>\n\n## What changed\n- <short description of each fix, e.g. "their" -> "there">\n\nIf the text has no errors, put the original text under "Corrected text" and write "- No errors found." under "What changed".',
+    user: input.text,
+    max_tokens: 1400,
+    temperature: 0.1,
+  }),
+  'titles': (input) => {
+    const style = input.style || 'SEO-friendly';
+    return {
+      system: `Write exactly 8 distinct blog post title ideas in a ${style} style for the given topic. Keep each under 65 characters, make them specific and click-worthy without being misleading, and vary the structure. Put each title on its own line with no numbering, no bullets, no quotation marks and no preamble.`,
+      user: `Topic: ${input.text}`,
+      max_tokens: 400,
+      temperature: 0.9,
+    };
+  },
   'translate': (input) => {
     const target = input.targetLang || 'Spanish';
     return {
@@ -101,7 +128,7 @@ module.exports = async (req, res) => {
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { body = {}; }
   }
-  const { mode, text, tone, platform, length, audience, targetLang } = body || {};
+  const { mode, text, tone, platform, length, audience, targetLang, style } = body || {};
 
   if (!mode || !PROMPTS[mode]) {
     res.status(400).json({ error: 'Unknown tool.' });
@@ -125,7 +152,7 @@ module.exports = async (req, res) => {
     .replace(/[ \t]{3,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n');
 
-  const built = PROMPTS[mode]({ text: cleanText, tone, platform, length, audience, targetLang });
+  const built = PROMPTS[mode]({ text: cleanText, tone, platform, length, audience, targetLang, style });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25000);
 
@@ -161,33 +188,43 @@ module.exports = async (req, res) => {
     } else if (PROVIDER === 'groq') {
       const key = (process.env.GROQ_API_KEY || '').trim();
       if (!key) { res.status(500).json({ error: 'Server is not configured yet (missing API key).' }); return; }
-      const r = await fetchWithRetry('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'authorization': `Bearer ${key}`,
-        },
-        body: JSON.stringify({
-          // 'llama-3.3-70b-versatile' was retired from Groq's free/dev tier in
-          // August 2026 and now requires an Enterprise plan. gpt-oss-120b is
-          // the current flagship model on the standard developer tier.
-          model: 'openai/gpt-oss-120b',
-          max_tokens: built.max_tokens,
-          temperature: built.temperature,
-          messages: [
-            { role: 'system', content: built.system },
-            { role: 'user', content: built.user },
-          ],
-        }),
-        signal: controller.signal,
-      });
-      if (!r.ok) {
+      // gpt-oss models are reasoning models: hidden "thinking" tokens count
+      // against the completion budget, so a small max_tokens can come back
+      // empty. Keep reasoning low, drop it from the response, and leave
+      // generous headroom above what the visible answer needs.
+      // 'llama-3.3-70b-versatile' was retired from Groq's free/dev tier in
+      // August 2026, so use the gpt-oss family, falling back to the smaller
+      // model if the first is unavailable on this account.
+      const models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+      let data = null;
+      for (let mi = 0; mi < models.length; mi++) {
+        const r = await fetchWithRetry('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'authorization': `Bearer ${key}`,
+          },
+          body: JSON.stringify({
+            model: models[mi],
+            max_completion_tokens: built.max_tokens + 1500,
+            temperature: built.temperature,
+            reasoning_effort: 'low',
+            include_reasoning: false,
+            messages: [
+              { role: 'system', content: built.system },
+              { role: 'user', content: built.user },
+            ],
+          }),
+          signal: controller.signal,
+        });
+        if (r.ok) { data = await r.json(); break; }
         const errBody = await r.text().catch(() => '');
-        console.error('Groq API error', r.status, errBody);
+        console.error('Groq API error', models[mi], r.status, errBody);
+        const modelProblem = [400, 403, 404, 410].includes(r.status);
+        if (modelProblem && mi < models.length - 1) continue;
         res.status(502).json({ error: `The AI service could not process this right now (upstream ${r.status}).` });
         return;
       }
-      const data = await r.json();
       result = data.choices?.[0]?.message?.content?.trim() || '';
     } else {
       const key = process.env.OPENAI_API_KEY;
